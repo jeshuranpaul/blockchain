@@ -127,6 +127,21 @@ app.controller("blockchain_controller", ["$scope", '$http', function ($scope, $h
 
                 var successCallback = function (response) {
                     console.log(response.data);
+                    $scope.mine_complete = true;
+                    if (data[status]) {
+                        $scope.blocks[index].good_block = true;
+                        $scope.blocks[index].mine_time = data["time"] + " ms";
+                        $scope.blocks[index].hash = data["hash"];
+                        $scope.blocks[index].nonce = data["nonce"];
+                    }
+                    else {
+                        $scope.blocks[index].good_block = false;
+                        $scope.blocks[index].mine_time = "timeout";
+                    }
+
+                    if (index < $scope.blocks.length - 1) {
+                        $scope.blocks[index + 1].parentID = $scope.blocks[index].hash;
+                    }
                 }
                 var errorCallback = function (response) {
 
