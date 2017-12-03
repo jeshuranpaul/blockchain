@@ -1,0 +1,9 @@
+﻿.bad_block {
+    background-color: lightsalmon !important;
+}
+.good_block{
+    background-color: lightgreen !important;
+}
+.fa{
+    padding-right: 10% !important;
+}

@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="en" ng-app="BlockChain">
+<head>
+    <title></title>
+	<meta charset="utf-8" />
+    <link href="styles/bootstrap.css" rel="stylesheet" />
+    <link href="styles/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="styles/mystyles.css" rel="stylesheet" />
+</head>
+<body>
+    
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Home</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </nav>
+    <br />
+    <div class="container" ng-controller="blockchain_controller">
+        <div class="row">
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-success" id="create_block_btn" ng-click="createBtnClickHandler($event)">
+                    <i class="fa fa-plus"></i>Create block
+                </button>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-primary" id="change_pref_btn" data-toggle="modal" data-target="#pref_modal"><i class="fa fa-wrench"></i>Change pref</button>
+            </div>
+            
+        </div>
+
+        <br />
+
+        <div class="row" ng-show="blocks.length > 0">
+            <div class="col-md-4" ng-repeat="block in blocks">
+                <div class="card" ng-class="{bad_block: block.mine_complete && !block.good_block, 
+                                            good_block: block.mine_complete && block.good_block}">
+                    <h4 class="card-header">Blockchain Block {{$index + 1}}</h4>
+                    <p class="card-header">Status: {{block.mine_time}}</p>
+                    <div class="card-body">
+                        <form>
+                            <div class="form-group row">
+                                <label for="block_label_{{$index}}" class="col-sm-4 col-form-label">Block</label>
+                                <div class="col-sm-8 input-group">
+                                    <div class="input-group-addon">#</div>
+                                    <input type="text" class="form-control" value="{{ block.id }}" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="parent_label_{{$index}}" class="col-sm-4 col-form-label">Parent</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" class="form-control" value="{{ block.parentID }}" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="data_label_{{$index}}" class="col-sm-4 col-form-label">Block data</label>
+                                <div class="col-sm-8 input-group">
+                                    <textarea class="form-control" rows="3" ng-keyup="onKeyUp($event, $index)">{{ block.data }}</textarea>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="nonce_label_{{$index}}" class="col-sm-4 col-form-label">None</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" class="form-control" value="{{ block.nonce }}" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="hash_label_{{$index}}" class="col-sm-4 col-form-label">Hash</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="text" class="form-control" value="{{ block.hash }}" disabled>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <button type="button" class="btn btn-outline-primary" ng-click="mineBtnClickHandler($event, $index)"><i class="fa fa-search"></i>  Mine</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <br />
+            </div>
+        </div>
+        <div class="modal fade" id="pref_modal">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Set preferences</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group row">
+                                <label for="updt_difficulty" class="col-sm-4 col-form-label">Difficulty</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="number" class="form-control" id="txt_difficulty" max="255" placeholder="difficulty" value="{{config.difficulty}}">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="updt_timeout" class="col-sm-4 col-form-label">Timeout</label>
+                                <div class="col-sm-8 input-group">
+                                    <input type="number" class="form-control" id="txt_timeout" placeholder="in milliseconds" value="{{config.timeout}}">
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="updt_language" class="col-sm-4 col-form-label">Language</label>
+                                <div class="col-sm-8 input-group">
+                                    <select class="form-control">
+                                        <option value="1">JavaScript implementation</option>
+                                        <option value="2">Java implementation</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-success confirmed" data-dismiss="modal" ng-click="saveBtnClickHandler($event)">Save</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="container">
+        
+    </footer>
+
+    <script src="scripts/jquery.js"></script>
+    <script src="scripts/popper.js"></script>
+    <script src="scripts/bootstrap.js"></script>
+    <script src="scripts/angular.js"></script>
+    <script src="scripts/sha256.js"></script>
+    <script src="scripts/blockchain.js"></script>
+</body>
+</html>
