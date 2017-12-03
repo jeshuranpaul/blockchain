@@ -1,6 +1,7 @@
 ﻿global_config = {
     difficulty: 3,
-    timeout: 100000
+    timeout: 100000,
+    langugage: 1
 }
 
 function Block() {
@@ -9,7 +10,7 @@ function Block() {
     this.data = "";
     this.mine_time = null;
     this.mine_complete = false;
-    this.good_block = false; 
+    this.good_block = false;
     this.parentID = 0;
     this.hash = null;
 
@@ -55,21 +56,28 @@ function Block() {
         this.mine_complete = true;
     }
 
-    
+
 }
 
 var app = angular.module('BlockChain', []);
 
-app.controller("blockchain_controller", ["$scope", function ($scope) {
-    angular.element(document).ready(function () {
-        $scope.blocks = [];
-        $scope.config = global_config;
+app.controller("blockchain_controller", ["$scope", '$http', function ($scope, $http) {
+    $scope.config = global_config;
 
+    angular.element(document).ready(function () {
+        $scope.blocks = [];    
+        debugger;
         $scope.saveBtnClickHandler = function (e) {
-            global_config.difficulty = parseInt(document.getElementById("txt_difficulty").value);
-            global_config.timeout = parseInt(document.getElementById("txt_timeout").value);
+            var diff = parseInt(document.getElementById("txt_difficulty").value),
+                timeout = parseInt(document.getElementById("txt_timeout").value),
+                lang = document.getElementById("select_language"),
+                lang_val = parseInt(lang.options[lang.selectedIndex].value);
+
+            global_config.difficulty = !isNaN(diff) ? diff : global_config.difficulty;
+            global_config.timeout = !isNaN(timeout) ? timeout : global_config.timeout;
+            global_config.langugage = !isNaN(lang_val) ? lang_val : global_config.langugage;
+
             $scope.config = global_config;
-            debugger;
             $scope.resetAllBlocks();
         }
 
@@ -87,7 +95,6 @@ app.controller("blockchain_controller", ["$scope", function ($scope) {
         }
 
         $scope.createBtnClickHandler = function (e) {
-            debugger;
             var new_block = new Block();
             new_block.createBlock();
             if ($scope.blocks.length == 0) {
@@ -100,14 +107,38 @@ app.controller("blockchain_controller", ["$scope", function ($scope) {
         }
 
         $scope.mineBtnClickHandler = function (e, index) {
-            $scope.blocks[index].mine(global_config.difficulty);
-            if (index < $scope.blocks.length - 1) {
-                $scope.blocks[index + 1].parentID = $scope.blocks[index].hash;
+            if (global_config.langugage == 1) {
+                $scope.blocks[index].mine(global_config.difficulty);
+                if (index < $scope.blocks.length - 1) {
+                    $scope.blocks[index + 1].parentID = $scope.blocks[index].hash;
+                }
             }
+            else if (global_config.langugage == 2) {
+                debugger;
+                var json = {
+                    "block": $scope.blocks[index].id,
+                    "parent": $scope.blocks[index].parentID,
+                    "data": $scope.blocks[index].data,
+                    "hash": $scope.blocks[index].hash,
+                    "nonce": $scope.blocks[index].nonce,
+                    "difficulty": global_config.difficulty,
+                    "timeout": global_config.timeout
+                };
+
+                var successCallback = function (response) {
+                    console.log(response.data);
+                }
+                var errorCallback = function (response) {
+
+                }
+
+                $http.post('/someUrl', json).then(successCallback, errorCallback);
+            }
+
+            
         }
 
         $scope.onKeyUp = function (e, index) {
-            debugger;
             $scope.blocks[index].data = e.target.value;
             $scope.propogateChange(index);
             $scope.blocks[index].good_block = false;

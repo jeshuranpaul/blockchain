@@ -93,7 +93,7 @@
                             <div class="form-group row">
                                 <label for="updt_difficulty" class="col-sm-4 col-form-label">Difficulty</label>
                                 <div class="col-sm-8 input-group">
-                                    <input type="number" class="form-control" id="txt_difficulty" max="255" placeholder="difficulty" value="{{config.difficulty}}">
+                                    <input type="number" class="form-control" id="txt_difficulty" max=10 placeholder="difficulty" value="{{config.difficulty}}">
                                 </div>
                             </div>
                             <div class="form-group row">
@@ -105,7 +105,7 @@
                             <div class="form-group row">
                                 <label for="updt_language" class="col-sm-4 col-form-label">Language</label>
                                 <div class="col-sm-8 input-group">
-                                    <select class="form-control">
+                                    <select class="form-control" id="select_language">
                                         <option value="1">JavaScript implementation</option>
                                         <option value="2">Java implementation</option>
                                     </select>
