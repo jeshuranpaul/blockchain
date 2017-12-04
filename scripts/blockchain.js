@@ -65,8 +65,7 @@ app.controller("blockchain_controller", ["$scope", '$http', function ($scope, $h
     $scope.config = global_config;
 
     angular.element(document).ready(function () {
-        $scope.blocks = [];    
-        debugger;
+        $scope.blocks = [];  
         $scope.saveBtnClickHandler = function (e) {
             var diff = parseInt(document.getElementById("txt_difficulty").value),
                 timeout = parseInt(document.getElementById("txt_timeout").value),
@@ -114,25 +113,26 @@ app.controller("blockchain_controller", ["$scope", '$http', function ($scope, $h
                 }
             }
             else if (global_config.langugage == 2) {
-                debugger;
-                var json = {
-                    "block": $scope.blocks[index].id,
-                    "parent": $scope.blocks[index].parentID,
-                    "data": $scope.blocks[index].data,
-                    "hash": $scope.blocks[index].hash,
-                    "nonce": $scope.blocks[index].nonce,
-                    "difficulty": global_config.difficulty,
-                    "timeout": global_config.timeout
+                
+                var data_json = {
+                    block: $scope.blocks[index].id,
+                    parent: $scope.blocks[index].parentID,
+                    data: $scope.blocks[index].data,
+                    hash: $scope.blocks[index].hash,
+                    nonce: $scope.blocks[index].nonce,
+                    difficulty: global_config.difficulty,
+                    timeout: global_config.timeout
                 };
+                
+              
 
                 var successCallback = function (response) {
-                    console.log(response.data);
-                    $scope.mine_complete = true;
-                    if (data[status]) {
+                		$scope.blocks[index].mine_complete = true;
+                    if (response.data["status"]) {
                         $scope.blocks[index].good_block = true;
-                        $scope.blocks[index].mine_time = data["time"] + " ms";
-                        $scope.blocks[index].hash = data["hash"];
-                        $scope.blocks[index].nonce = data["nonce"];
+                        $scope.blocks[index].mine_time = response.data["time"] + " ms";
+                        $scope.blocks[index].hash = response.data["hash"];
+                        $scope.blocks[index].nonce = response.data["nonce"];
                     }
                     else {
                         $scope.blocks[index].good_block = false;
@@ -144,10 +144,15 @@ app.controller("blockchain_controller", ["$scope", '$http', function ($scope, $h
                     }
                 }
                 var errorCallback = function (response) {
-
+                		alert("Error"+response);
                 }
 
-                $http.post('/someUrl', json).then(successCallback, errorCallback);
+                $http({
+                		method: 'POST',
+                		url: 'http://localhost:18080/Blockchain/MineBlockServlet',
+                		contentType: 'application/json',
+                		data : JSON.stringify(data_json)
+            		}).then(successCallback, errorCallback);
             }
 
             
