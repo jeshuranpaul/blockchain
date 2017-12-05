@@ -1,21 +1,23 @@
-﻿//global variable
-global_config = {
-    difficulty: 3,      //hashing difficulty
-    timeout: 10000,     //in milliseconds
-    langugage: 1,       //1 -> Javascript; 2-> Java
-    url: "http://localhost:8080/Blockchain/MineBlockServlet"    //url for Java servlet
-}
-
-var app = angular.module('BlockChain', []);
+﻿var app = angular.module('BlockChain', []);
 
 //service for block chain
 app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', function ($http, $timeout, UIHelperService) {
+    this.config = {
+        difficulty: 3,      //hashing difficulty
+        timeout: 10000,     //in milliseconds
+        langugage: 1,       //1 -> Javascript; 2-> Java
+        port: 8080,
+        url: "/Blockchain/MineBlockServlet"    //url for Java servlet
+    }
+
     var blocks = [],    //stores all the Blocks in the blockchain
         options = [{ value: 1, name: "Javascript Implementation" }, { value: 2, name: "Java Implementation" }];     //popup language select options
+    var _this = this;
 
-    //getters for blocks and options
+    //getters for blocks, options and config
     this.getOptions = function () { return options; }
     this.getBlocks = function () { return blocks; }
+    this.getConfig = function () { return this.config; }
 
     //structure for individual block
     var Block = function () {
@@ -60,7 +62,7 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
                 this.nonce++;
                 this.hash = this.generateHash();
                 currtime = new Date().getTime();
-                if (currtime - start > global_config.timeout) {
+                if (currtime - start > _this.config.timeout) {
                     this.mine_action_perf = true;
                     this.good_block = false;
                     this.mine_time = "Timeout. Mine for more time";
@@ -94,19 +96,21 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
     //handler for settings button
     this.saveBtnClickHandler = function (elements) {
         var diff = elements[0], //entered difficulty
-            curr_diff = global_config.difficulty,   //current difficulty
-            timeout = elements[1],  
-            lang_val = elements[2], 
-            url = elements[3];
+            curr_diff = this.config.difficulty,   //current difficulty
+            timeout = elements[1],
+            lang_val = elements[2],
+            url = elements[3],
+            port = elements[4];
 
         //updating global variable 
-        global_config.difficulty = !isNaN(diff) ? diff : global_config.difficulty;
-        global_config.timeout = !isNaN(timeout) ? timeout : global_config.timeout;
-        global_config.langugage = !isNaN(lang_val) ? lang_val : global_config.langugage;
-        global_config.url = url;
+        this.config.difficulty = !isNaN(diff) ? diff : this.config.difficulty;
+        this.config.timeout = !isNaN(timeout) ? timeout : this.config.timeout;
+        this.config.langugage = !isNaN(lang_val) ? lang_val : this.config.langugage;
+        this.config.url = url;
+        this.config.port = !isNaN(parseInt(port)) ? parseInt(port) : 80;
 
         //blocks are reset only if difficulty is changed
-        if (curr_diff != global_config.difficulty)
+        if (curr_diff != this.config.difficulty)
             this.resetAllBlocks();
     }
 
@@ -124,7 +128,7 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
                 blocks[i + 1].parentID = blocks[i].hash;
         }
     }
-    
+
     //constructs json with data for sending to any server
     this.constructJsonData = function (index) {
         return {
@@ -133,16 +137,17 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
             data: blocks[index].data,
             hash: blocks[index].hash,
             nonce: blocks[index].nonce,
-            difficulty: global_config.difficulty,
-            timeout: global_config.timeout
+            difficulty: this.config.difficulty,
+            timeout: this.config.timeout
         }
     }
 
     //using javascript to find solution for set difficulty
     this.findHashUsingJS = function (index, elements, enableActions, callback) {
+        var diff = this.config.difficulty;
         //setting timeout to try making it async on the javascript end. doesn't help much though. thus, display freezes when difficulty is higher
         $timeout(function () {
-            blocks[index].mine(global_config.difficulty);
+            blocks[index].mine(diff);
             if (index < blocks.length - 1) {
                 if (blocks[index + 1])
                     blocks[index + 1].parentID = blocks[index].hash;
@@ -157,11 +162,13 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
 
     //using external service to find the solution
     this.findHashUsingExternalService = function (index, elements, enableActions, callback) {
-        var data_json = this.constructJsonData(index);
+
+        var data_json = this.constructJsonData(index),
+            full_url = "http://localhost:" + (this.config.port !== "" ? this.config.port : 80) + this.config.url;
 
         $http({
             method: 'POST',
-            url: global_config.url,
+            url: full_url,
             contentType: 'application/json',
             data: JSON.stringify(data_json)
         }).then(
@@ -211,7 +218,7 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
         //does not mine if parent is not mined, unless if block is genesis block
         if (index > 0 && !blocks[index].parentMined) {
             var traverse = 0;
-            while (blocks[traverse].good_block) { traverse++; debugger; }
+            while (blocks[traverse].good_block) { traverse++; }
             var element;
             if (traverse > 0) {
                 element = document.getElementById("card" + (traverse));
@@ -234,10 +241,10 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
         var elements = UIHelperService.getElements(e);
         UIHelperService.disableActions(elements);
 
-        if (global_config.langugage == 1) {
+        if (this.config.langugage == 1) {
             this.findHashUsingJS(index, elements, UIHelperService.enableActions, callback);
         }
-        else if (global_config.langugage == 2) {
+        else if (this.config.langugage == 2) {
             this.findHashUsingExternalService(index, elements, UIHelperService.enableActions, callback);
         }
     }
@@ -245,8 +252,9 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
     //handler for key up event
     this.onKeyUpHandler = function (e, index) {
         blocks[index].data = e.target.value;
-        this.propagateChange(index);
         blocks[index].good_block = false;
+        if (index != blocks.length - 1)
+            this.propagateChange(index);
     }
 
     //invalidates rest of the chain from given index of the blockchain
@@ -337,24 +345,32 @@ app.service("UIHelperService", [function () {
 
 //controller for block chain. Acts as view updater
 app.controller("BlockChainController", ["$scope", 'BlockChainService', function ($scope, BlockChainService) {
-    $scope.config = global_config;
-    $scope.blocks = [];         //view makes use of this to update all the blocks
+    $scope.config = JSON.parse(JSON.stringify(BlockChainService.getConfig()));
+    $scope.blocks = BlockChainService.getBlocks();         //view makes use of this to update all the blocks
     $scope.options = BlockChainService.getOptions();        //options for language in modal popup
-    $scope.select_index = $scope.options[0];        
+    $scope.select_index = $scope.options[0];
 
     angular.element(document).ready(function () {
-        
         //settings button handler
         $scope.saveBtnClickHandler = function (e) {
-            var elements = [parseInt(document.getElementById("txt_difficulty").value),
-                            parseInt(document.getElementById("txt_timeout").value),
+            var elements = [parseInt(document.getElementById("txt_difficulty").value.trim()),
+                            parseInt(document.getElementById("txt_timeout").value.trim()),
                             $scope.select_index.value,
-                            document.getElementById("txt_url").value];
+                            document.getElementById("txt_url").value.trim(),
+                            document.getElementById("txt_port").value.trim()];
 
             BlockChainService.saveBtnClickHandler(elements);
             $scope.blocks = BlockChainService.getBlocks();
-            $scope.config = global_config;
+            $scope.config = JSON.parse(JSON.stringify(BlockChainService.getConfig()));
         }
+
+        $scope.settingsBtnClickHandler = BtnClickHandler = function (e) {
+            $scope.config = JSON.parse(JSON.stringify(BlockChainService.getConfig()));
+        };
+
+        $scope.cancelBtnClickHandler = function (e) {
+            $scope.config = JSON.parse(JSON.stringify(BlockChainService.getConfig()));
+        };
 
         //create block button handler
         $scope.createBtnClickHandler = function (e) {
