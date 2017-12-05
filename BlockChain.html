@@ -16,28 +16,27 @@
         </button>
     </nav>
     <br />
-    <div class="container" ng-controller="blockchain_controller">
+    <div class="container" ng-controller="blockchain_controller" ng-cloak>
         <div class="row">
-            <div class="col-md-2">
+            <div class="col-md-4">
                 <button type="button" class="btn btn-outline-success" id="create_block_btn" ng-click="createBtnClickHandler($event)">
-                    <i class="fa fa-plus"></i>Create block
+                    <i class="fa fa-plus"></i>  Create block
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="change_pref_btn" data-toggle="modal" data-target="#pref_modal">
+                    <i class="fa fa-wrench"></i>  Change pref
                 </button>
             </div>
-            <div class="col-md-2">
-                <button type="button" class="btn btn-outline-primary" id="change_pref_btn" data-toggle="modal" data-target="#pref_modal"><i class="fa fa-wrench"></i>Change pref</button>
-            </div>
-            
         </div>
 
         <br />
 
         <div class="row" ng-show="blocks.length > 0">
             <div class="col-md-4" ng-repeat="block in blocks">
-                <div class="card" ng-class="{bad_block: block.mine_complete && !block.good_block, 
-                                            good_block: block.mine_complete && block.good_block}">
+                <div class="card">
                     <h4 class="card-header">Blockchain Block {{$index + 1}}</h4>
                     <p class="card-header">Status: {{block.mine_time}}</p>
-                    <div class="card-body">
+                    <div class="card-body" ng-class="{bad_block: block.mine_action_perf && !block.good_block, 
+                                                      good_block: block.mine_action_perf && block.good_block }" >
                         <form>
                             <div class="form-group row">
                                 <label for="block_label_{{$index}}" class="col-sm-4 col-form-label">Block</label>
@@ -71,7 +70,13 @@
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <button type="button" class="btn btn-outline-primary" ng-click="mineBtnClickHandler($event, $index)"><i class="fa fa-search"></i>  Mine</button>
+                                <div class="col-md-4">
+                                    <button type="button" class="btn btn-primary" ng-click="mineBtnClickHandler($event, $index)" 
+                                            ng-class="{'disabled_btn': !block.parentMined && $index != 0 && !block.good_block }">
+                                    <i class="fa" ng-class="{'fa-lock': !block.parentMined && $index != 0 && !block.good_block, 
+                                                            'fa-search': (block.parentMined && !block.good_block) || ($index == 0 && !block.good_block),
+                                                            'fa-check': block.good_block}"></i>  Mine</button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -79,6 +84,7 @@
                 <br />
             </div>
         </div>
+        <div class="loading-spiner-holder ng-hide" data-loading><div class="loading-spiner"><img src="img/loading.gif" /></div></div>
         <div class="modal fade" id="pref_modal">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -97,7 +103,7 @@
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label for="updt_timeout" class="col-sm-4 col-form-label">Timeout</label>
+                                <label for="updt_timeout" class="col-sm-4 col-form-label">Timeout (ms)</label>
                                 <div class="col-sm-8 input-group">
                                     <input type="number" class="form-control" id="txt_timeout" placeholder="in milliseconds" value="{{config.timeout}}">
                                 </div>

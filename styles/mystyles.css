@@ -1,9 +1,12 @@
-﻿.bad_block {
-    background-color: lightsalmon !important;
+﻿.bad_block{
+    background-color: #ff000014 !important;
 }
 .good_block{
-    background-color: lightgreen !important;
+    background-color: #19ec1930 !important;
 }
-.fa{
-    padding-right: 10% !important;
+.disabled_btn{
+    cursor: not-allowed;
+}
+[ng\:cloak], [ng-cloak], .ng-cloak {
+  display: none !important;
 }
