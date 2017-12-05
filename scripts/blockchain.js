@@ -209,7 +209,27 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
     //mine button handler 
     this.mineBtnClickHandler = function (e, index, callback) {
         //does not mine if parent is not mined, unless if block is genesis block
-        if (index > 0 && !blocks[index].parentMined) return;
+        if (index > 0 && !blocks[index].parentMined) {
+            var traverse = 0;
+            while (blocks[traverse].good_block) { traverse++; debugger; }
+            var element;
+            if (traverse > 0) {
+                element = document.getElementById("card" + (traverse));
+            }
+            else {
+                element = document.getElementById("card0");
+            }
+
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+            element.style.border = "1px solid red";
+
+            setTimeout(function () {
+                element.style.border = "";
+                window.scrollBy(0, -15);
+            }, 700)
+
+            return;
+        }
 
         var elements = UIHelperService.getElements(e);
         UIHelperService.disableActions(elements);
@@ -245,23 +265,26 @@ app.service("BlockChainService", ['$http', '$timeout', 'UIHelperService', functi
         blocks[blocks.length - 1].mine_time = "bad";
     }
 
-    //checks if blockchain is valid | unused
-    this.isChainValid = function (index) {
-        if (index == 0) index++;
+    //validates blockchain
+    this.validateChain = function () {
+        var index = 1;
         for (var i = index; i < blocks.length; i++) {
             if (blocks[i].generateHash() !== blocks[i].hash) {
                 blocks[i].good_block = false;
+                if (blocks[i + 1])
+                    blocks[i + 1].parentMined = false;
                 continue;
             }
-            else blocks[i].good_block = true;
 
             if (blocks[i].parentID !== blocks[i - 1].hash) {
                 blocks[i].good_block = false;
                 continue;
             }
-            else blocks[i].good_block = true;
+
+            if (blocks[i + 1]) {
+                blocks[i + 1].good_block = blocks[i].good_block
+            }
         }
-        return true;
     }
 }]);
 
